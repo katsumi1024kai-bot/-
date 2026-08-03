@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+
+# Env / secrets
+.env
+.env.*
+
+# Claude Code: personal overrides, not shared with the team
+.claude/settings.local.json

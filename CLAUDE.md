@@ -4,8 +4,16 @@ Claude Codeの学習・個人開発用リポジトリ。まだ本格的なプロ
 
 ## Claude Codeの設定について
 
-- `.claude/settings.json` にこのプロジェクト用の権限設定がある。読み取り系コマンド（`git status`/`diff`/`log`、`ls`、`cat`、`npm test`/`build` 等）は確認なしで実行でき、`git push --force`・`git reset --hard`・`rm -rf` などの破壊的な操作は必ず確認を求める設定にしてある。
-- 新しいプロジェクトを始めるときは、このファイルと `.claude/settings.json` をコピーして出発点にすると良い。
+- `.claude/settings.json` にこのプロジェクト用の権限設定がある。読み取り系コマンド（`git status`/`diff`/`log`、`ls`、`cat`、`find`/`grep` 等）や `npm`/`yarn`/`pnpm` の `run`/`test` 系は確認なしで実行できる。`git push --force`・`git reset --hard`・`git branch -D`・`rm -rf`・`sudo` などの破壊的/取り返しのつかない操作は必ず確認を求める設定にしてある。
+- `git branch*` のように末尾を `*` にすると「一覧を見る」だけでなく「ブランチを消す」コマンドまで許可してしまうことがある。許可ルールを増やすときは、コマンド全体の意味（副作用があるか）を確認してから追加すること。
+- `.claude/settings.local.json`（個人専用の上書き設定）は `.gitignore` 済み。チームに共有したくない自分だけの設定はここに書く。
+- 新しいプロジェクトを始めるときは、このファイルと `.claude/settings.json`・`.gitignore` をコピーして出発点にすると良い。
+
+## Claudeへの申し送り（このユーザーについて）
+
+- Claude Codeはほぼ初めて。専門用語を使うときは一言かんたんな説明を添える。
+- 破壊的な操作（force push、履歴の書き換え、ファイル削除など）をする前は、内容を要約してから確認を取る。
+- コミットやpushは、ユーザーが明示的に依頼したときだけ行う。
 
 ## コーディング方針（今後プロジェクトが増えたら更新する）
 
