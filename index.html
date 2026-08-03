@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>つづくダイエット | 継続できる記録サイト</title>
+<meta name="description" content="毎日の記録を続けやすくする、ストリーク・実績バッジ・カレンダーで継続をサポートするダイエット記録サイト">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🔥</span>
+        <h1>つづくダイエット</h1>
+      </div>
+      <div class="streak-badge" id="streakBadge">
+        <span class="streak-num" id="streakNum">0</span>
+        <span class="streak-label">日連続</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="card message-card" id="messageCard">
+        <p id="encourageMessage">今日の記録から始めましょう！</p>
+      </section>
+
+      <section class="card" id="todayCard">
+        <h2>今日の記録 <span class="today-date" id="todayDateLabel"></span></h2>
+        <form id="entryForm" class="entry-form">
+          <div class="field">
+            <label for="dateInput">日付</label>
+            <input type="date" id="dateInput" required>
+          </div>
+          <div class="field">
+            <label for="weightInput">体重 (kg)</label>
+            <input type="number" id="weightInput" step="0.1" min="0" placeholder="例: 65.4" required>
+          </div>
+          <div class="field">
+            <label for="fatInput">体脂肪率 (%) <span class="optional">任意</span></label>
+            <input type="number" id="fatInput" step="0.1" min="0" max="100" placeholder="例: 20.5">
+          </div>
+          <div class="field mood-field">
+            <label>今日の調子 <span class="optional">任意</span></label>
+            <div class="mood-picker" id="moodPicker">
+              <button type="button" data-mood="😀" class="mood-btn">😀</button>
+              <button type="button" data-mood="🙂" class="mood-btn">🙂</button>
+              <button type="button" data-mood="😐" class="mood-btn">😐</button>
+              <button type="button" data-mood="😞" class="mood-btn">😞</button>
+            </div>
+          </div>
+          <div class="field field-wide">
+            <label for="memoInput">メモ <span class="optional">任意</span></label>
+            <input type="text" id="memoInput" maxlength="140" placeholder="今日の食事や運動など">
+          </div>
+          <button type="submit" class="btn-primary">記録する</button>
+        </form>
+      </section>
+
+      <section class="card" id="progressCard">
+        <h2>目標までの進捗</h2>
+        <form id="goalForm" class="goal-form">
+          <div class="field">
+            <label for="startWeightInput">開始体重 (kg)</label>
+            <input type="number" id="startWeightInput" step="0.1" min="0">
+          </div>
+          <div class="field">
+            <label for="goalWeightInput">目標体重 (kg)</label>
+            <input type="number" id="goalWeightInput" step="0.1" min="0">
+          </div>
+          <button type="submit" class="btn-secondary">目標を保存</button>
+        </form>
+        <div class="progress-stats" id="progressStats"></div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>体重の推移</h2>
+        <canvas id="weightChart" height="220"></canvas>
+        <p class="empty-hint" id="chartEmptyHint">記録がまだありません。今日の体重を記録してみましょう。</p>
+      </section>
+
+      <section class="card">
+        <h2>記録カレンダー</h2>
+        <p class="hint">記録した日が色付きになります。金の星は自己ベスト（最軽量）達成の日です。</p>
+        <div class="calendar-heatmap" id="calendarHeatmap"></div>
+        <div class="calendar-legend">
+          <span class="legend-cell cell-empty"></span> 未記録
+          <span class="legend-cell cell-logged"></span> 記録あり
+          <span class="legend-star">★</span> 自己ベスト
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>実績バッジ</h2>
+        <p class="hint">連続記録日数に応じてバッジが解除されます。一度解除したバッジは消えません。</p>
+        <div class="badges-grid" id="badgesGrid"></div>
+      </section>
+
+      <section class="card">
+        <h2>統計</h2>
+        <div class="stats-grid" id="statsGrid"></div>
+      </section>
+
+      <section class="card">
+        <h2>リマインダー通知</h2>
+        <p class="hint">ブラウザ通知を許可すると、指定時刻までに記録していない日にリマインドします（このタブを開いている間のみ有効です）。</p>
+        <div class="reminder-controls">
+          <button type="button" class="btn-secondary" id="enableNotifBtn">通知を有効にする</button>
+          <label for="reminderHour">リマインド時刻</label>
+          <select id="reminderHour"></select>
+        </div>
+        <p class="notif-status" id="notifStatus"></p>
+      </section>
+
+      <section class="card">
+        <h2>記録履歴</h2>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <section class="card">
+        <h2>データ管理</h2>
+        <p class="hint">記録はこの端末のブラウザ内にのみ保存され、外部には送信されません。機種変更や引っ越しの前にバックアップしてください。</p>
+        <div class="data-controls">
+          <button type="button" class="btn-secondary" id="exportBtn">エクスポート (JSON)</button>
+          <label class="btn-secondary file-label">
+            インポート
+            <input type="file" id="importInput" accept="application/json" hidden>
+          </label>
+          <button type="button" class="btn-danger" id="resetBtn">全データを削除</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>すべてのデータはブラウザのlocalStorageに保存されます。サーバーには送信されません。</p>
+    </footer>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
