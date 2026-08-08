@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODOリスト兼カレンダー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 TODOカレンダー</h1>
+        </header>
+
+        <div class="main-content">
+            <!-- カレンダーセクション -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button id="prevMonth" class="nav-btn">◀</button>
+                    <h2 id="monthYear"></h2>
+                    <button id="nextMonth" class="nav-btn">▶</button>
+                </div>
+                <div class="weekdays">
+                    <div>日</div>
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                </div>
+                <div class="calendar" id="calendar"></div>
+            </div>
+
+            <!-- TODOセクション -->
+            <div class="todo-section">
+                <h2 id="selectedDate"></h2>
+
+                <div class="todo-input">
+                    <input
+                        type="text"
+                        id="todoInput"
+                        placeholder="TODOを入力..."
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button id="addTodoBtn" onclick="addTodo()">追加</button>
+                </div>
+
+                <ul id="todoList" class="todo-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
