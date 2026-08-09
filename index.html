@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リズムランド</title>
+<style>
+  :root{
+    --bg:#1a1a2e;
+    --panel:#16213e;
+    --accent:#e94560;
+    --accent2:#0f9;
+    --text:#f1f1f1;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Sans","Meiryo",sans-serif;
+    overflow:hidden;
+    -webkit-user-select:none;user-select:none;
+    touch-action:manipulation;
+  }
+  #app{
+    position:relative;
+    width:100vw;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+  }
+  canvas{
+    background:var(--panel);
+    display:block;
+    max-width:100vw;
+    max-height:100vh;
+    touch-action:manipulation;
+  }
+  #overlay{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    background:rgba(22,33,62,0.92);
+    padding:20px;
+  }
+  #overlay h1{
+    font-size:2.4em;margin:0 0 10px;
+    color:var(--accent);
+    text-shadow:0 0 12px rgba(233,69,96,0.6);
+  }
+  #overlay p{margin:6px 0;line-height:1.6;max-width:480px;}
+  .btn{
+    margin-top:18px;
+    padding:14px 36px;
+    font-size:1.2em;
+    border:none;
+    border-radius:40px;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 4px 0 #a02e42;
+    transition:transform .05s;
+  }
+  .btn:active{transform:translateY(4px);box-shadow:0 0 0 #a02e42;}
+  .btn.secondary{background:#333a5c;box-shadow:0 4px 0 #1f2440;}
+  #hud{
+    position:absolute;top:10px;left:0;width:100%;
+    display:flex;justify-content:space-between;
+    padding:0 16px;
+    font-size:1.1em;
+    pointer-events:none;
+    text-shadow:0 2px 4px rgba(0,0,0,.6);
+  }
+  #judge{
+    position:absolute;
+    top:38%;left:50%;
+    transform:translate(-50%,-50%);
+    font-size:2em;
+    font-weight:bold;
+    pointer-events:none;
+    opacity:0;
+    text-shadow:0 2px 8px rgba(0,0,0,.7);
+  }
+  .hidden{display:none !important;}
+  #menuList{display:flex;flex-direction:column;gap:12px;margin-top:10px;}
+  small{opacity:.7;}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game" width="480" height="720"></canvas>
+  <div id="hud" class="hidden">
+    <div id="scoreLabel">SCORE: 0</div>
+    <div id="comboLabel">COMBO: 0</div>
+  </div>
+  <div id="judge"></div>
+
+  <div id="overlay">
+    <h1>🎵 リズムランド 🎵</h1>
+    <p>リズム天国風のミニゲーム集です。<br>音とタイミングに合わせて <b>スペースキー / タップ / クリック</b> しよう！</p>
+    <div id="menuList">
+      <button class="btn" data-game="beat">① ビートタップ</button>
+      <button class="btn" data-game="echo">② エコーコピー</button>
+      <button class="btn" data-game="rocket">③ ロケットジャンプ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = document.getElementById('hud');
+const scoreLabel = document.getElementById('scoreLabel');
+const comboLabel = document.getElementById('comboLabel');
+const judgeEl = document.getElementById('judge');
+const menuList = document.getElementById('menuList');
+
+// ---------- Audio ----------
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const actx = new AudioCtx();
+
+function beep(freq, dur, type='sine', vol=0.25, when=0){
+  const t = actx.currentTime + when;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(gain).connect(actx.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+}
+function tickSound(){ beep(880, 0.06, 'square', 0.15); }
+function hitSound(){ beep(1200, 0.08, 'triangle', 0.3); }
+function missSound(){ beep(140, 0.2, 'sawtooth', 0.25); }
+function successJingle(){
+  [523,659,784,1046].forEach((f,i)=>beep(f,0.18,'triangle',0.25,i*0.12));
+}
+function failJingle(){
+  [400,300,200].forEach((f,i)=>beep(f,0.25,'sawtooth',0.2,i*0.15));
+}
+
+// ---------- Global state ----------
+let score = 0;
+let combo = 0;
+let currentGame = null;
+let rafId = null;
+
+function resetHud(){
+  score = 0; combo = 0;
+  scoreLabel.textContent = 'SCORE: 0';
+  comboLabel.textContent = 'COMBO: 0';
+}
+function addScore(points){
+  score += points;
+  combo += 1;
+  scoreLabel.textContent = 'SCORE: ' + score;
+  comboLabel.textContent = 'COMBO: ' + combo;
+}
+function breakCombo(){
+  combo = 0;
+  comboLabel.textContent = 'COMBO: 0';
+}
+
+let judgeTimer = null;
+function showJudge(text, color){
+  judgeEl.textContent = text;
+  judgeEl.style.color = color;
+  judgeEl.style.opacity = '1';
+  judgeEl.style.transform = 'translate(-50%,-60%)';
+  judgeEl.style.transition = 'none';
+  requestAnimationFrame(()=>{
+    judgeEl.style.transition = 'opacity .5s ease, transform .5s ease';
+    judgeEl.style.opacity = '0';
+    judgeEl.style.transform = 'translate(-50%,-90%)';
+  });
+}
+
+// input dispatcher: current game defines onInput()
+let inputHandler = null;
+function fireInput(){
+  if (inputHandler) inputHandler();
+}
+window.addEventListener('keydown', (e)=>{
+  if (e.code === 'Space' || e.code === 'Enter'){
+    e.preventDefault();
+    fireInput();
+  }
+});
+canvas.addEventListener('pointerdown', (e)=>{
+  e.preventDefault();
+  fireInput();
+});
+
+// ---------- Utility drawing ----------
+function clear(bg='#16213e'){
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+}
+function centerText(text, x, y, size, color, weight='bold'){
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px 'Hiragino Sans', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+// =====================================================================
+// GAME 1: ビートタップ (Beat Tap) - hit space on every beat marker
+// =====================================================================
+function startBeatGame(){
+  resetHud();
+  const BPM = 100;
+  const beatInterval = 60/BPM; // seconds per beat
+  const totalBeats = 20;
+  const startTime = actx.currentTime + 1.0;
+  const hitWindow = 0.18; // seconds tolerance
+
+  let beatIndex = 0;
+  let judged = new Array(totalBeats).fill(false);
+  let finished = false;
+  let ended = false;
+
+  // schedule tick sounds
+  for(let i=0;i<totalBeats;i++){
+    beep(660, 0.05, 'square', 0.12, (startTime + i*beatInterval) - actx.currentTime);
+  }
+
+  inputHandler = () => {
+    if (finished) return;
+    const now = actx.currentTime;
+    // find nearest unjudged beat
+    let best = -1, bestDiff = Infinity;
+    for(let i=0;i<totalBeats;i++){
+      if (judged[i]) continue;
+      const bt = startTime + i*beatInterval;
+      const diff = Math.abs(now - bt);
+      if (diff < bestDiff){ bestDiff = diff; best = i; }
+    }
+    if (best === -1) return;
+    if (bestDiff <= hitWindow){
+      judged[best] = true;
+      hitSound();
+      const perfect = bestDiff <= hitWindow*0.4;
+      addScore(perfect ? 100 : 60);
+      showJudge(perfect ? 'PERFECT!' : 'GOOD', perfect ? '#0f9' : '#ffd166');
+    } else {
+      missSound();
+      breakCombo();
+      showJudge('MISS', '#e94560');
+    }
+  };
+
+  function loop(){
+    if (ended) return;
+    const now = actx.currentTime;
+    clear('#0f3057');
+
+    // mark missed beats that passed window without being judged
+    for(let i=0;i<totalBeats;i++){
+      if (!judged[i] && now > startTime + i*beatInterval + hitWindow){
+        judged[i] = true;
+        breakCombo();
+      }
+    }
+
+    // progress bar of upcoming beats
+    const w = canvas.width, h = canvas.height;
+    centerText('ビートタップ', w/2, 80, 34, '#fff');
+    centerText('スペース/タップでリズムに合わせて！', w/2, 120, 16, '#aac');
+
+    // draw beat line target
+    const targetY = h*0.55;
+    ctx.strokeStyle = '#e94560';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(w*0.15, targetY);
+    ctx.lineTo(w*0.85, targetY);
+    ctx.stroke();
+
+    // draw approaching notes
+    const travelTime = 1.2; // seconds to travel from top to target
+    for(let i=0;i<totalBeats;i++){
+      const bt = startTime + i*beatInterval;
+      const t = (bt - now); // time until hit
+      if (t < -0.3 || t > travelTime) continue;
+      const progress = 1 - (t/travelTime);
+      const y = -40 + progress*(targetY+40);
+      const color = judged[i] ? '#555' : '#0f9';
+      ctx.beginPath();
+      ctx.arc(w/2, y, 22, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // character bounce
+    const beatPhase = ((now - startTime) % beatInterval) / beatInterval;
+    const bounce = Math.abs(Math.sin(beatPhase*Math.PI));
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(w/2, targetY + 100 - bounce*15, 30, 0, Math.PI*2);
+    ctx.fill();
+
+    if (now > startTime + totalBeats*beatInterval + 0.5 && !finished){
+      finished = true;
+      endMiniGame(score >= totalBeats*60*0.6);
+      return;
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+// =====================================================================
+// GAME 2: エコーコピー (Echo Copy) - repeat the shown pattern of taps
+// =====================================================================
+function startEchoGame(){
+  resetHud();
+  const rounds = 5;
+  let round = 1;
+  let pattern = [];
+  let playerIndex = 0;
+  let phase = 'show'; // show | wait | input
+  let ended = false;
+  let phaseStart = actx.currentTime;
+  let showIdx = 0;
+  const beatGap = 0.5;
+
+  function newRound(){
+    pattern.push(Math.random() < 0.5 ? 'short' : 'long');
+    playerIndex = 0;
+    phase = 'show';
+    showIdx = 0;
+    phaseStart = actx.currentTime;
+    pattern.forEach((p,i)=>{
+      const t = i*beatGap;
+      beep(p==='short'?880:440, p==='short'?0.08:0.25, 'triangle', 0.25, t);
+    });
+  }
+  newRound();
+
+  inputHandler = () => {
+    if (phase !== 'input' || ended) return;
+    const expected = pattern[playerIndex];
+    // simple: any tap counts as "short" unless held - use quick approx via double check not needed for simplicity
+    tickSound();
+    playerIndex++;
+    addScore(50);
+    if (playerIndex >= pattern.length){
+      round++;
+      if (round > rounds){
+        endMiniGame(true);
+        ended = true;
+      } else {
+        phase = 'gap';
+        phaseStart = actx.currentTime;
+      }
+    }
+  };
+
+  function loop(){
+    if (ended) return;
+    const now = actx.currentTime;
+    clear('#3a0ca3');
+    const w = canvas.width, h = canvas.height;
+    centerText('エコーコピー', w/2, 80, 34, '#fff');
+    centerText(`ラウンド ${round}/${rounds}`, w/2, 120, 18, '#dde');
+
+    if (phase === 'show'){
+      const elapsed = now - phaseStart;
+      const idx = Math.floor(elapsed / beatGap);
+      centerText('よく聞いて見て！', w/2, h*0.4, 22, '#ffd166');
+      if (idx < pattern.length){
+        const p = pattern[idx];
+        ctx.fillStyle = p === 'short' ? '#0f9' : '#e94560';
+        ctx.beginPath();
+        ctx.arc(w/2, h*0.55, p==='short'?40:60, 0, Math.PI*2);
+        ctx.fill();
+      }
+      if (elapsed > pattern.length*beatGap + 0.4){
+        phase = 'input';
+        phaseStart = now;
+      }
+    } else if (phase === 'gap'){
+      centerText('正解！次のリズム...', w/2, h*0.45, 22, '#0f9');
+      if (now - phaseStart > 0.8){
+        newRound();
+      }
+    } else if (phase === 'input'){
+      centerText('同じリズムでタップ！', w/2, h*0.4, 22, '#ffd166');
+      for(let i=0;i<pattern.length;i++){
+        ctx.beginPath();
+        ctx.arc(w/2 - (pattern.length-1)*30 + i*60, h*0.55, 18, 0, Math.PI*2);
+        ctx.fillStyle = i < playerIndex ? '#0f9' : '#555';
+        ctx.fill();
+      }
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+// =====================================================================
+// GAME 3: ロケットジャンプ (Rocket Jump) - tap right when rocket reaches ring
+// =====================================================================
+function startRocketGame(){
+  resetHud();
+  const BPM = 90;
+  const beatInterval = 60/BPM;
+  const totalJumps = 10;
+  const startTime = actx.currentTime + 1.2;
+  const hitWindow = 0.16;
+  let judged = new Array(totalJumps).fill(false);
+  let finished = false;
+  let ended = false;
+  let rocketY = 0;
+
+  for(let i=0;i<totalJumps;i++){
+    beep(220, 0.05, 'sine', 0.1, (startTime + i*beatInterval) - actx.currentTime - 0.3 > 0 ? (startTime + i*beatInterval) - actx.currentTime - 0.3 : 0);
+  }
+
+  inputHandler = () => {
+    if (finished) return;
+    const now = actx.currentTime;
+    let best=-1, bestDiff=Infinity;
+    for(let i=0;i<totalJumps;i++){
+      if (judged[i]) continue;
+      const bt = startTime + i*beatInterval;
+      const diff = Math.abs(now-bt);
+      if (diff < bestDiff){ bestDiff = diff; best = i; }
+    }
+    if (best===-1) return;
+    if (bestDiff <= hitWindow){
+      judged[best] = true;
+      hitSound();
+      const perfect = bestDiff <= hitWindow*0.4;
+      addScore(perfect?100:60);
+      showJudge(perfect?'PERFECT!':'GOOD', perfect?'#0f9':'#ffd166');
+    } else {
+      missSound();
+      breakCombo();
+      showJudge('MISS', '#e94560');
+    }
+  };
+
+  function loop(){
+    if (ended) return;
+    const now = actx.currentTime;
+    clear('#022b3a');
+    const w=canvas.width, h=canvas.height;
+    centerText('ロケットジャンプ', w/2, 80, 32, '#fff');
+    centerText('輪っかに重なった瞬間にタップ！', w/2, 120, 16, '#aac');
+
+    for(let i=0;i<totalJumps;i++){
+      if (!judged[i] && now > startTime + i*beatInterval + hitWindow){
+        judged[i] = true;
+        breakCombo();
+      }
+    }
+
+    const ringX = w*0.75;
+    const ringY = h*0.5;
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(ringX, ringY, 45, 0, Math.PI*2);
+    ctx.stroke();
+
+    // rocket moves in an arc based on nearest beat phase
+    const phase = ((now - startTime) % beatInterval) / beatInterval;
+    const arcProgress = phase; // 0..1 across beat
+    const x = w*0.15 + (ringX - w*0.15) * arcProgress;
+    const jumpHeight = 180;
+    const y = ringY - Math.sin(arcProgress*Math.PI) * jumpHeight * 0 + (ringY - Math.sin(Math.min(arcProgress,1)*Math.PI)*100);
+
+    ctx.save();
+    ctx.translate(x, ringY - Math.sin(arcProgress*Math.PI)*100);
+    ctx.rotate(arcProgress*0.6 - 0.3);
+    ctx.fillStyle = '#e94560';
+    ctx.beginPath();
+    ctx.moveTo(-20,0);
+    ctx.lineTo(20,0);
+    ctx.lineTo(0,-40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    if (now > startTime + totalJumps*beatInterval + 0.5 && !finished){
+      finished = true;
+      endMiniGame(score >= totalJumps*60*0.6);
+      return;
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+// ---------- End of minigame ----------
+function endMiniGame(success){
+  inputHandler = null;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (success) successJingle(); else failJingle();
+
+  const w=canvas.width, h=canvas.height;
+  clear(success ? '#134e13' : '#4e1313');
+  centerText(success ? 'よくできました！' : 'もう一度！', w/2, h*0.4, 36, success?'#0f9':'#e94560');
+  centerText('SCORE: ' + score, w/2, h*0.5, 26, '#fff');
+
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
+    <h1>${success ? '🎉 クリア！' : '😵 残念...'}</h1>
+    <p>スコア: <b>${score}</b></p>
+    <div id="menuList">
+      <button class="btn" id="retryBtn">もう一度</button>
+      <button class="btn secondary" id="menuBtn">メニューに戻る</button>
+    </div>
+  `;
+  document.getElementById('retryBtn').addEventListener('click', ()=> launchGame(currentGame));
+  document.getElementById('menuBtn').addEventListener('click', showMenu);
+}
+
+function showMenu(){
+  hud.classList.add('hidden');
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
+    <h1>🎵 リズムランド 🎵</h1>
+    <p>リズム天国風のミニゲーム集です。<br>音とタイミングに合わせて <b>スペースキー / タップ / クリック</b> しよう！</p>
+    <div id="menuList">
+      <button class="btn" data-game="beat">① ビートタップ</button>
+      <button class="btn" data-game="echo">② エコーコピー</button>
+      <button class="btn" data-game="rocket">③ ロケットジャンプ</button>
+    </div>
+    <small>Made with Web Audio &amp; Canvas</small>
+  `;
+  overlay.querySelectorAll('[data-game]').forEach(btn=>{
+    btn.addEventListener('click', ()=> launchGame(btn.dataset.game));
+  });
+}
+
+function launchGame(name){
+  currentGame = name;
+  if (actx.state === 'suspended') actx.resume();
+  overlay.classList.add('hidden');
+  hud.classList.remove('hidden');
+  if (rafId) cancelAnimationFrame(rafId);
+  if (name === 'beat') startBeatGame();
+  else if (name === 'echo') startEchoGame();
+  else if (name === 'rocket') startRocketGame();
+}
+
+menuList.querySelectorAll('[data-game]').forEach(btn=>{
+  btn.addEventListener('click', ()=> launchGame(btn.dataset.game));
+});
+
+// responsive canvas sizing
+function resize(){
+  const targetRatio = 480/720;
+  let w = window.innerWidth, h = window.innerHeight;
+  if (w/h > targetRatio){
+    canvas.style.height = h + 'px';
+    canvas.style.width = (h*targetRatio) + 'px';
+  } else {
+    canvas.style.width = w + 'px';
+    canvas.style.height = (w/targetRatio) + 'px';
+  }
+}
+window.addEventListener('resize', resize);
+resize();
+
+// idle screen draw
+clear('#16213e');
+centerText('タップしてスタート', canvas.width/2, canvas.height/2, 24, '#556');
+
+})();
+</script>
+</body>
+</html>
