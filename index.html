@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODOカレンダー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sheet">
+        <div class="masthead">
+            <h1>TODOカレンダー</h1>
+            <span class="today-label" id="todayLabel"></span>
+        </div>
+
+        <div class="panels">
+            <section class="panel" aria-label="カレンダー">
+                <div class="cal-head">
+                    <h2 id="monthYear"></h2>
+                    <div class="cal-nav">
+                        <button id="prev" aria-label="前の月">‹</button>
+                        <button id="next" aria-label="次の月">›</button>
+                    </div>
+                </div>
+                <div class="weekdays">
+                    <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+                </div>
+                <div class="grid" id="grid"></div>
+            </section>
+
+            <section class="panel" aria-label="TODOリスト">
+                <div class="todo-head">
+                    <h2 id="selectedLabel"></h2>
+                    <span class="todo-count" id="count"></span>
+                </div>
+                <div class="composer">
+                    <input id="input" type="text" placeholder="やることを入力…">
+                    <button id="addBtn">追加</button>
+                </div>
+                <div class="priority-picker" id="priorityPicker">
+                    <button type="button" class="prio-btn prio-must active" data-p="must">必須</button>
+                    <button type="button" class="prio-btn prio-should" data-p="should">推奨</button>
+                    <button type="button" class="prio-btn prio-want" data-p="want">やりたい</button>
+                </div>
+                <ul class="todos" id="list"></ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
