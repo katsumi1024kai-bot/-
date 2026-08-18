@@ -1,193 +1,146 @@
-let currentDate = new Date();
-let selectedDate = new Date();
+let view = new Date();
+let selected = new Date();
+let todos = JSON.parse(localStorage.getItem('todos') || '{}');
+let currentPriority = 'must';
 
-// ローカルストレージからTODOデータを取得
-const loadTodos = () => {
-    const stored = localStorage.getItem('todos');
-    return stored ? JSON.parse(stored) : {};
-};
+const PRIORITY_ORDER = { must: 0, should: 1, want: 2 };
+const PRIORITY_LABEL = { must: '必須', should: '推奨', want: 'やりたい' };
 
-// ローカルストレージにTODOデータを保存
-const saveTodos = (todos) => {
-    localStorage.setItem('todos', JSON.stringify(todos));
-};
+const save = () => localStorage.setItem('todos', JSON.stringify(todos));
+const key = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-let todos = loadTodos();
+document.getElementById('todayLabel').textContent =
+    new Intl.DateTimeFormat('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }).format(new Date());
 
-// 日付を「YYYY-MM-DD」形式の文字列にする
-const dateToString = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+function renderCalendar() {
+    const y = view.getFullYear(), m = view.getMonth();
+    document.getElementById('monthYear').textContent =
+        new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: 'long' }).format(new Date(y, m, 1));
 
-// カレンダーを描画
-const renderCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const first = new Date(y, m, 1);
+    const start = new Date(first);
+    start.setDate(start.getDate() - first.getDay());
 
-    // 月の最初の日と最後の日を取得
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-    // ヘッダーを更新
-    const monthYear = new Intl.DateTimeFormat('ja-JP', {
-        year: 'numeric',
-        month: 'long'
-    }).format(firstDay);
-    document.getElementById('monthYear').textContent = monthYear;
-
-    // カレンダーを生成
-    const calendar = document.getElementById('calendar');
-    calendar.innerHTML = '';
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    const todayKey = key(new Date());
+    const selKey = key(selected);
 
     for (let i = 0; i < 42; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
-        const dateStr = dateToString(date);
-
-        const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day';
-        dayElement.textContent = date.getDate();
-
-        // 今月以外の日付
-        if (date.getMonth() !== month) {
-            dayElement.classList.add('other-month');
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        const btn = document.createElement('button');
+        btn.className = 'day';
+        btn.textContent = d.getDate();
+        const k = key(d);
+        const inMonth = d.getMonth() === m;
+        if (!inMonth) btn.classList.add('pad');
+        if (k === todayKey) btn.classList.add('today');
+        if (k === selKey) btn.classList.add('selected');
+        if (todos[k] && todos[k].length) {
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            btn.appendChild(dot);
         }
-
-        // 今日
-        if (dateToString(new Date()) === dateStr) {
-            dayElement.classList.add('today');
-        }
-
-        // 選択日
-        if (dateToString(selectedDate) === dateStr) {
-            dayElement.classList.add('selected');
-        }
-
-        // TODOがある日
-        if (todos[dateStr] && todos[dateStr].length > 0) {
-            dayElement.classList.add('has-todo');
-        }
-
-        // クリックで日付を選択
-        dayElement.addEventListener('click', () => {
-            if (date.getMonth() === month) {
-                selectedDate = new Date(date);
-                renderCalendar();
-                renderTodos();
-            }
+        btn.addEventListener('click', () => {
+            if (!inMonth) return;
+            selected = d;
+            renderCalendar();
+            renderTodos();
         });
-
-        calendar.appendChild(dayElement);
+        grid.appendChild(btn);
     }
-};
+}
 
-// TODOを描画
-const renderTodos = () => {
-    const dateStr = dateToString(selectedDate);
-    const date = new Intl.DateTimeFormat('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long'
-    }).format(selectedDate);
+function sortedItems(items) {
+    return items
+        .map((todo, i) => ({ todo, i }))
+        .sort((a, b) => {
+            if (a.todo.done !== b.todo.done) return a.todo.done ? 1 : -1;
+            return PRIORITY_ORDER[a.todo.priority || 'must'] - PRIORITY_ORDER[b.todo.priority || 'must'];
+        });
+}
 
-    document.getElementById('selectedDate').textContent = date;
+function renderTodos() {
+    document.getElementById('selectedLabel').textContent =
+        new Intl.DateTimeFormat('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }).format(selected);
 
-    const todoList = document.getElementById('todoList');
-    todoList.innerHTML = '';
+    const k = key(selected);
+    const items = todos[k] || [];
+    const doneCount = items.filter(t => t.done).length;
+    document.getElementById('count').textContent = items.length ? `${doneCount} / ${items.length} 完了` : '';
 
-    const todosForDate = todos[dateStr] || [];
+    const list = document.getElementById('list');
+    list.innerHTML = '';
 
-    if (todosForDate.length === 0) {
-        todoList.innerHTML = '<li style="text-align: center; color: #999; padding: 20px;">TODOはまだ登録されていません</li>';
+    if (!items.length) {
+        list.innerHTML = '<li class="empty">この日のTODOはまだありません</li>';
         return;
     }
 
-    todosForDate.forEach((todo, index) => {
-        const todoItem = document.createElement('li');
-        todoItem.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    sortedItems(items).forEach(({ todo, i }) => {
+        const li = document.createElement('li');
+        li.className = 'todo-item' + (todo.done ? ' done' : '');
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'todo-checkbox';
-        checkbox.checked = todo.completed;
-        checkbox.addEventListener('change', () => {
-            todos[dateStr][index].completed = checkbox.checked;
-            saveTodos(todos);
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = todo.done;
+        cb.addEventListener('change', () => {
+            todos[k][i].done = cb.checked;
+            save();
             renderTodos();
         });
 
         const text = document.createElement('span');
-        text.className = 'todo-text';
-        text.textContent = todo.text;
+        text.className = 'text';
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'todo-delete';
-        deleteBtn.textContent = '削除';
-        deleteBtn.addEventListener('click', () => {
-            todos[dateStr].splice(index, 1);
-            if (todos[dateStr].length === 0) {
-                delete todos[dateStr];
-            }
-            saveTodos(todos);
+        const chip = document.createElement('span');
+        const p = todo.priority || 'must';
+        chip.className = `prio-chip prio-${p}`;
+        chip.textContent = PRIORITY_LABEL[p];
+        text.appendChild(chip);
+        text.appendChild(document.createTextNode(todo.text));
+
+        const del = document.createElement('button');
+        del.className = 'del';
+        del.textContent = '削除';
+        del.addEventListener('click', () => {
+            todos[k].splice(i, 1);
+            if (!todos[k].length) delete todos[k];
+            save();
             renderCalendar();
             renderTodos();
         });
 
-        todoItem.appendChild(checkbox);
-        todoItem.appendChild(text);
-        todoItem.appendChild(deleteBtn);
-        todoList.appendChild(todoItem);
+        li.append(cb, text, del);
+        list.appendChild(li);
     });
-};
+}
 
-// TODOを追加
-const addTodo = () => {
-    const input = document.getElementById('todoInput');
+function addTodo() {
+    const input = document.getElementById('input');
     const text = input.value.trim();
-
     if (!text) return;
-
-    const dateStr = dateToString(selectedDate);
-    if (!todos[dateStr]) {
-        todos[dateStr] = [];
-    }
-
-    todos[dateStr].push({
-        text: text,
-        completed: false
-    });
-
-    saveTodos(todos);
+    const k = key(selected);
+    if (!todos[k]) todos[k] = [];
+    todos[k].push({ text, done: false, priority: currentPriority });
+    save();
     input.value = '';
     renderCalendar();
     renderTodos();
-};
+}
 
-// Enterキーで追加
-const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-        addTodo();
-    }
-};
+document.getElementById('addBtn').addEventListener('click', addTodo);
+document.getElementById('input').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTodo(); });
+document.getElementById('prev').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); renderCalendar(); });
+document.getElementById('next').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCalendar(); });
 
-// 前の月へ
-document.getElementById('prevMonth').addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
+document.querySelectorAll('.prio-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        currentPriority = btn.dataset.p;
+        document.querySelectorAll('.prio-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    });
 });
 
-// 次の月へ
-document.getElementById('nextMonth').addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-});
-
-// 初期化
 renderCalendar();
 renderTodos();
