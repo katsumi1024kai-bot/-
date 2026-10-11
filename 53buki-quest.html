@@ -94,7 +94,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .node.lock{opacity:.55;cursor:not-allowed}
 .node.lock .ico canvas{animation:none;filter:grayscale(1) brightness(.5)}
 .node.final .t b{font-size:21px}
-.node.next .t b::after{content:" ◀";color:var(--gold);font-size:14px;animation:blink 1s steps(2) infinite}
+.node.here .t b::after{content:" ◀";color:var(--gold);font-size:14px;animation:blink 1s steps(2) infinite}
 .stars{letter-spacing:.06em;color:#3c4478;font-size:15px;line-height:1}
 .stars .on{color:var(--gold);text-shadow:0 0 8px rgba(255,208,77,.55)}
 .foot{font-size:13px;color:var(--muted);text-align:center;margin:0}
@@ -138,7 +138,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .theend .big{font-family:var(--pix);font-size:clamp(40px,12vw,60px);color:var(--gold);text-shadow:3px 3px 0 var(--gold2),6px 6px 0 var(--edge);line-height:1.1}
 .story{display:flex;flex-direction:column;gap:14px;text-align:center;padding-top:10px}
 .story .chap{font-family:var(--pix);color:var(--gold);letter-spacing:.3em;font-size:14px}
-.story h2{font-family:var(--pix);font-weight:400;font-size:clamp(36px,11vw,52px);line-height:1.1;margin:0;color:var(--sc);text-shadow:3px 3px 0 var(--edge)}
+.story h2{word-break:keep-all;text-wrap:balance;font-family:var(--pix);font-weight:400;font-size:clamp(32px,10vw,52px);line-height:1.1;margin:0;color:var(--sc);text-shadow:3px 3px 0 var(--edge)}
 .story .land{font-family:var(--pix);font-size:17px;line-height:1.8;margin:0;min-height:3.6em;white-space:pre-line}
 .boss-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;text-align:left}
 .boss-card b{font-family:var(--pix);font-weight:400;font-size:18px;color:var(--sc)}
@@ -227,7 +227,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 /* ---------- result ---------- */
 .rank{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:22px}
 .rank .lbl{font-family:var(--pix);font-size:14px;letter-spacing:.3em;color:var(--muted)}
-.rank .name{font-family:var(--pix);font-size:clamp(36px,11vw,54px);line-height:1.15;color:var(--gold);text-shadow:3px 3px 0 var(--gold2),6px 6px 0 var(--edge);animation:appear .7s cubic-bezier(.2,1.4,.4,1)}
+.rank .name{word-break:keep-all;text-wrap:balance;font-family:var(--pix);font-size:clamp(36px,11vw,54px);line-height:1.15;color:var(--gold);text-shadow:3px 3px 0 var(--gold2),6px 6px 0 var(--edge);animation:appear .7s cubic-bezier(.2,1.4,.4,1)}
 .rank.lose .name{color:var(--miss);text-shadow:3px 3px 0 #5a0f22,6px 6px 0 var(--edge)}
 .rank .bigstars{font-size:34px;letter-spacing:.12em;color:#3c4478}
 .rank .bigstars span{display:inline-block}
@@ -284,7 +284,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .fhud .sp{margin-left:auto;color:var(--muted)}
 .fhud .gold{color:var(--gold)}
 .fhud .done{color:var(--hit)}
-.fwrap{position:relative;border:3px solid var(--frame);border-radius:12px;box-shadow:0 0 0 3px var(--edge),0 12px 28px rgba(0,0,0,.45);overflow:hidden;background:var(--edge);width:100%;max-width:440px;align-self:center}
+.fwrap{position:relative;border:3px solid var(--frame);border-radius:12px;box-shadow:0 0 0 3px var(--edge),0 12px 28px rgba(0,0,0,.45);overflow:hidden;background:var(--edge);width:100%;max-width:min(440px, calc((100vh - 280px) * .8333));min-width:240px;align-self:center}
+@supports (height:100svh){ .fwrap{max-width:min(440px, calc((100svh - 280px) * .8333))} }
 #fc{display:block;width:100%;height:auto;aspect-ratio:160/192;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:pointer}
 .banner{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-family:var(--pix);font-size:15px;background:rgba(4,6,26,.86);color:var(--ink);border:2px solid var(--frame);border-radius:8px;padding:3px 12px;white-space:nowrap;pointer-events:none;animation:bannerin 1.8s forwards}
 .fcombo{position:absolute;right:8px;top:8px;font-family:var(--pix);font-size:13px;color:var(--gold);text-shadow:1px 1px 0 var(--edge),-1px -1px 0 var(--edge);pointer-events:none}
@@ -323,7 +324,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .dexg{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;padding-top:6px}
 .dc{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border-radius:10px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);min-width:0}
 .dc .no{font-family:var(--pix);font-size:10px;color:var(--muted)}
-.dc .nm{font-family:var(--pix);font-size:12px;line-height:1.3;text-align:center;word-break:break-all;min-height:2.6em;display:flex;align-items:center}
+.dc .nm{font-family:var(--pix);font-size:12px;line-height:1.3;text-align:center;overflow-wrap:anywhere;min-height:2.6em;display:flex;align-items:center}
 .dc.unseen .nm,.dc.seen .nm{color:var(--dim)}
 .dc.f3{border-color:var(--gold);box-shadow:0 0 12px rgba(255,208,77,.3)}
 .dc.rusty{border-color:var(--rust)}
@@ -1147,7 +1148,24 @@ const stable = s=>JSON.stringify(Object.assign({}, s, {updatedAt:0}));
 
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); return true; }catch(e){ return false; } }
-function saveLocal(){ if (lsSet(LS_SAVE, JSON.stringify(save))) lastSaved = Date.now(); }
+// 公開前から開いていた v2 タブは adv を知らずに丸ごと古い写しで上書きしうる。
+// v2 も flags の数値は「大きい方」で合体するので、増えるだけの値（契約・キラ・形）を flags にも写しておき、syncAdv で戻す
+function advToFlags(){
+  const A = save.adv, f = save.flags;
+  A.caught.forEach(id=>{ f["ac"+id] = 1; });
+  A.kira.forEach(id=>{ f["ak"+id] = 1; });
+  for (const id in A.top) f["at"+id] = Math.max(Number(f["at"+id])||0, A.top[id]);
+}
+function flagsToAdv(){
+  const A = save.adv, f = save.flags, caught = new Set(A.caught), kira = new Set(A.kira);
+  for (const k in f){
+    const m = /^a([ckt])(\d+)$/.exec(k); if (!m) continue;
+    const id = Number(m[2]), v = Number(f[k])||0; if (!id || !v) continue;
+    if (m[1]==="c") caught.add(id); else if (m[1]==="k") kira.add(id); else A.top[id] = Math.max(A.top[id]||0, Math.min(3, v));
+  }
+  A.caught = [...caught].sort((a,b)=>a-b); A.kira = [...kira].sort((a,b)=>a-b);
+}
+function saveLocal(){ advToFlags(); if (lsSet(LS_SAVE, JSON.stringify(save))) lastSaved = Date.now(); }
 // 1日1回、起動時のセーブを3日分とっておく（万一こわれた時の保険）
 function backupLocal(raw){
   let bak = {};
@@ -1260,6 +1278,7 @@ function partnerW(){ const id = save.adv.partner; return id && isCaught(id) && W
 function partnerAbility(){ const w = partnerW(); if (!w || wRust(w)) return 0; const st = wStars(w); return st>=3 ? 3 : st>=2 ? 2 : 1; }
 // 読みこみ・合体のあとに毎回（何度やっても同じ結果）：形を★に追いつかせる、出会いを記録、相棒を決める
 function syncAdv(){
+  flagsToAdv();
   const A = save.adv;
   A.caught.forEach(id=>{ const w = W[id-1]; if (w) A.top[id] = Math.max(A.top[id]||1, wStars(w)); });
   const seen = new Set(A.seen); A.caught.forEach(i=>seen.add(i));
@@ -1634,13 +1653,13 @@ function drawField(){
   const g = c.getContext("2d"), m = MAPS[F.map], P = Object.assign({accent:(m.st?STAGES[m.st-1]:FINAL).hex}, m.P);
   for (let y=0;y<12;y++) for (let x=0;x<10;x++) drawTile(g, tileAt(m, x, y), x*16, y*16, P, F.tick + x + y, x, y);
   for (let y=0;y<12;y++) for (let x=0;x<10;x++) if (tileAt(m, x, y)==="N") blit(g, HERO_D, NPC_PAL(m.st||1), x*16, y*16);
-  if (F.rival) blit(g, HERO_D, F.map==="final" ? RIVAL_DARK : RIVAL_PAL, F.rival.x*16, F.rival.y*16);
   const pw = partnerW();
   if (pw && F.trail){
     const d = monData(pw.id, pw.st, formOf(pw));
     const tx = F.trail[0]*16, ty = F.trail[1]*16;
     if (!(F.trail[0]===F.x && F.trail[1]===F.y)) blit(g, d.rows, wRust(pw) ? Object.assign({}, d.P, MON_RUST) : d.P, tx, ty + 2, F.px < tx);
   }
+  if (F.rival) blit(g, HERO_D, F.map==="final" ? RIVAL_DARK : RIVAL_PAL, F.rival.x*16, F.rival.y*16);
   const bob = F.moving && F.walk ? -1 : 0;
   blit(g, F.dir==="u" ? HERO_U : HERO_D, HERO_PAL, Math.round(F.px), Math.round(F.py) + bob, F.dir==="l");
 }
@@ -1730,7 +1749,7 @@ function encounter(){
   if (!save.adv.seen.includes(id)) save.adv.seen.push(id);
   const kira = rollKira(id);
   SFX.encounter(); flashScreen(true);
-  setTimeout(()=>{ if (F) F.lock = false; ctx.back = "field"; startBattle("wild", id, {kira}); }, reduceMotion ? 0 : 380);
+  later(()=>{ if (F) F.lock = false; if (view!=="field") return; ctx.back = "field"; startBattle("wild", id, {kira}); }, reduceMotion ? 0 : 380);
 }
 // キラ：もう契約した子に 1/8（FEVER中は 1/4）。全部の文を ノーミスで 勝つと キラ契約
 const KIRA_RATE = 1/8;
@@ -1802,7 +1821,7 @@ function doomHTML(){
   </section>`;
 }
 function emblemsHTML(){
-  return `<div class="emblems" aria-label="紋章">${STAGES.map(s=>`<span class="emb ${cleared(s.id)?"on":""}" style="--sc:var(${s.c})" title="${s.name}の紋章">${s.sub.slice(0,1)}</span>`).join("")}</div>`;
+  return `<div class="emblems" aria-label="紋章">${STAGES.map(s=>`<span class="emb ${cleared(s.id)?"on":""}" style="--sc:var(${s.c})" title="${s.name}の紋章">${"権法税業知"[s.id-1]||"？"}</span>`).join("")}</div>`;
 }
 function renderHome(){
   bgm("map");
@@ -1813,7 +1832,7 @@ function renderHome(){
     const m = MAPS[id], s = m.st ? STAGES[m.st-1] : FINAL, isF = id==="final", lock = !mapOpen(id);
     const ws = isF ? W : W.filter(w=>w.st===m.st), g = ws.filter(w=>isCaught(w.id)).length, ru = ws.filter(w=>wRust(w)).length;
     const rec = stageRec(s.id);
-    return `<button class="node ${rec.clear?"clear":""} ${lock?"lock":""} ${isF?"final":""} ${pos===id?"next":""}" data-map="${id}" style="--sc:var(${s.c})" ${lock?'aria-disabled="true"':""}>
+    return `<button class="node ${rec.clear?"clear":""} ${lock?"lock":""} ${isF?"final":""} ${pos===id?"here":""}" data-map="${id}" style="--sc:var(${s.c})" ${lock?'aria-disabled="true"':""}>
       <span class="ico" data-spr="${s.spr}"></span>
       <span class="t"><small>${s.ch}　${s.name}</small><b>${m.name}</b><span>${lock?"5つの紋章で 封印がとける":`なかま ${g}/${ws.length}${ru?`　サビ ${ru}`:""}`}</span></span>
       <span class="st">${starStr(rec.stars)}<span class="best num">${rec.best?fmt(rec.best):""}</span></span>
@@ -2045,6 +2064,7 @@ function makeRun(kind, arg, opt){
     const w = W[arg-1]; if (!w) return null;
     const f = formOf(w);
     const kira = !!opt.kira;
+    opt.top0 = isCaught(w.id) ? (save.adv.top[w.id]||1) : 0;
     meta = {ch:kira?"キラ":"草むら", name:F ? MAPS[F.map].name : "はじめての契約", boss:(kira?"キラ":"")+monName(w, f), mon:w.id, form:f, rusty:!kira && wRust(w), kira, c:kira?"--s6":(STAGES[w.st-1]||FINAL).c};
     items = pickFrom([w], kira ? live(w).length : Math.min(3, live(w).length));
     if (!opt.tutorial && F){ hearts = F.hearts; }
@@ -2059,7 +2079,8 @@ function makeRun(kind, arg, opt){
     const n = Number(arg);
     meta = {ch:"ライバル", name:`カンタ（${n}回目）`, boss:"カンタ", hero:n===3 ? RIVAL_DARK : RIVAL_PAL, c:n===3 ? "--s7" : "--s3",
       intro:["勘で いけるって！","今度は 覚えてきたぜ！","…思い出させて くれ…！"][n-1],
-      half:"うそだろ…！？", pinch:"へへっ、勘が さえてきた！", down:["あれ？ 勘が はずれた…","8種制限って そういうことか…","…思い出した！ ありがとな！"][n-1]};
+      half:"うそだろ…！？", pinch:"へへっ、勘が さえてきた！", down:["あれ？ 勘が はずれた…","8種制限って そういうことか…","…思い出した！ ありがとな！"][n-1],
+      lose:["な？ 勘で いけるだろ！","へへっ、覚えてきた 甲斐が あったぜ！","……思い出せない…。また 来てくれ…"][n-1]};
     items = n===1 ? pickFrom(W.filter(w=>w.st===1), 3) : n===2 ? pickFrom(W.filter(w=>w.st===4), 8) : pickFrom(W, 10);
     hearts = heartsFor(items.length, lv);
   }
@@ -2115,7 +2136,10 @@ function renderBattle(){
   if ($("#palart")) $("#palart").appendChild(monCanvas(pw, formOf(pw), 3, wRust(pw) ? "rust" : ""));
   let armed = false;
   $("#quit").onclick = ()=>{
+    if (!run || run.over) return;
+    if (run.opt && run.opt.tutorial){ clearSeq(); clearInterval(clock); run = null; show("starter"); return; }
     if (run.kind==="wild") return flee();
+    if (run.kind==="npc" && Number.isFinite(run.hearts) && run.hearts <= 0) return fieldLose();
     if (!armed){ armed = true; const q = $("#quit"); q.textContent = "ほんとうに にげる？"; q.classList.add("warn"); later(()=>{ armed = false; const b = $("#quit"); if (b){ b.textContent = "にげる"; b.classList.remove("warn"); } }, 2500); return; }
     clearSeq(); clearInterval(clock);
     if (FIELD_KINDS.has(run.kind) && F){ F.hearts = run.hearts; F.combo = 0; }
@@ -2228,7 +2252,7 @@ function record(k, ok, soft){
 }
 function evolveTo(w, to){
   const from = save.adv.top[w.id] || 1;
-  save.adv.top[w.id] = to;
+  save.adv.top[w.id] = Math.max(from, to);
   save.stats.evolutions = (save.stats.evolutions||0) + 1;
   gainExp(to===3 ? 50 : 30);
   return from;
@@ -2341,6 +2365,7 @@ function lose(){
 /* --- 草むら・修行者の決着（結果画面は出さない） --- */
 function flee(){
   if (!run || run.over) return;
+  if (Number.isFinite(run.hearts) && run.hearts <= 0) return fieldLose();
   clearSeq(); clearInterval(clock);
   save.stats.flee = (save.stats.flee||0) + 1;
   if (F){ F.hearts = run.hearts; F.combo = 0; F.cool = 1; }
@@ -2422,8 +2447,11 @@ function afterWild(w, newCatch, kira){
   const tut = run.opt && run.opt.tutorial;
   if (tut){ save.flags.starter = w.id; save.flags.v3intro = true; save.adv.partner = w.id; }
   markDirty(); flushSoon();
-  const to = wStars(w), from = save.adv.top[w.id] || 1;
-  if (!newCatch && kira!=="lost" && isCaught(w.id) && to > from) return evolveScene(w, from, to, ()=>{ lines.push(`<span class="x">+${to===3?50:30} EXP（進化）</span>`); fieldResult(lines, !tut); });
+  const to = wStars(w), from = run.opt.top0 || save.adv.top[w.id] || 1;
+  if (!newCatch && kira!=="lost" && isCaught(w.id) && to > from){
+    if (/うれしそうだ/.test(lines[0])) lines[0] = `${esc(monName(w, to))}は うれしそうだ。`;
+    return evolveScene(w, from, to, ()=>{ lines.push(`<span class="x">+${to===3?50:30} EXP（進化）</span>`); fieldResult(lines, !tut); });
+  }
   fieldResult(lines, !tut, exp);
 }
 function evolveScene(w, from, to, done){
@@ -2434,7 +2462,8 @@ function evolveScene(w, from, to, done){
   let i = 0, ended = false;
   const end = ()=>{
     if (ended) return; ended = true; clearInterval(tm);
-    evolveTo(w, to);
+    evolveTo(w, to); markDirty(); flushSoon();
+    const nm = $("#mname"); if (nm) nm.innerHTML = `${esc(monName(w, to))} <small class="muted">${"★".repeat(wStars(w))}</small>`;
     mw.innerHTML = ""; const c = monCanvas(w, to, 7); c.classList.add("mon", "appear"); mw.appendChild(c);
     flashScreen(true); burst(26); SFX.fanfare(); ar.classList.remove("evo");
     say(`${esc(monName(w, from))}は <span style="color:var(--gold)">${esc(monName(w, to))}</span>に 進化した！ ${"★".repeat(to)}`);
@@ -2443,15 +2472,16 @@ function evolveScene(w, from, to, done){
   const tm = setInterval(()=>{ mw.innerHTML = ""; mw.appendChild(i%2 ? B : A); i++; if (i >= 10) end(); }, reduceMotion ? 1 : 170);
   ar.onclick = ()=>end();
 }
+function checkTrueEnd(){ if (!save.flags.trueEnd && W.every(w=>wStars(w)===3)){ save.flags.trueEnd = true; markDirty(); return true; } return false; }
 function fieldResult(lines, again){
-  const pw = partnerW();
+  if (checkTrueEnd()) lines.push(`<b style="color:var(--gold)">TRUE END！ 53体 すべてが 伝説体に なった。${esc(heroName())}は「伝説の宅建士」と 呼ばれるように なった。</b>`);
   if (F && Number.isFinite(run.hearts) && !(run.opt && run.opt.tutorial)){ F.hearts = run.hearts; F.combo = run.combo; F.cool = 1; }
   run.fieldDone = true;
   $("#ox").hidden = true;
   $("#msg").innerHTML = `
     <div class="flines">${lines.map(l=>`<span>${l}</span>`).join("")}<span class="x num">+${comma(run.expGain)} EXP（正解）</span></div>
     <div class="row">
-      ${again ? `<button class="next" id="again">つづけて さがす ▶</button>` : ""}
+      ${again ? `<button class="next" id="again" style="flex-basis:100%">つづけて さがす ▶</button>` : ""}
       <button class="${again?"btn2":"next"}" id="tofield">${run.opt && run.opt.tutorial ? "冒険へ ▶" : "フィールドへ"}</button>
     </div>`;
   const a = $("#again"); if (a){ a.onclick = ()=>wildAgain(); a.focus({preventScroll:true}); }
@@ -2499,7 +2529,7 @@ function finish(won){
     if (r.score > (st.score||0)){ newScore = (st.score||0) > 0; st.score = r.score; }
     st.lastAt = nowISO();
   } else if (r.kind==="rival"){
-    save.flags["rival"+r.arg] = 1;
+    if (won || Number(r.arg)!==3) save.flags["rival"+r.arg] = 1;   // 魔王城のカンタだけは 勝つまで 待っている
     if (won){ bonus = 80; if (Number(r.arg)===3) save.flags.brave = 1; }
   } else if (won) bonus = 20;
   const lvFrom = r.lv0;
@@ -2512,8 +2542,7 @@ function finish(won){
   if (r.kind==="forge") rec.w = r.arg;
   save.runs.push(rec);
   if (save.runs.length > RUNS_MAX) save.runs = save.runs.slice(-RUNS_MAX);
-  let trueEnd = false;
-  if (!save.flags.trueEnd && W.every(w=>wStars(w)===3)){ save.flags.trueEnd = true; trueEnd = true; }
+  const trueEnd = checkTrueEnd();
   const firstEnding = r.kind==="final" && won && !save.flags.ending;
   if (r.kind==="final" && won) save.flags.ending = (save.flags.ending||0) + 1;
   r.result = {won, ms, stars, firstClear, newBest, newScore, bonus, evolved:r.evolved.slice(), upgraded, trueEnd, lvFrom, lvTo:lvInfo(save.hero.exp).lv};
@@ -2538,7 +2567,7 @@ function renderResult(){
       <span class="name">${title}</span>
       ${isBoss && R.won ? `<span class="bigstars" id="bigstars" aria-label="星${R.stars}つ"><span>★</span><span>★</span><span>★</span></span>` : ""}
       ${badges?`<div class="badges">${badges}</div>`:""}
-      ${r.kind==="rival" ? `<p class="cheer">カンタ「${esc(r.meta.down)}」${R.won && Number(r.arg)===3 ? "<br>ゆうきの♥ を もらった！ 魔王戦で ♥+1" : ""}</p>` : ""}
+      ${r.kind==="rival" ? `<p class="cheer">カンタ「${esc(R.won ? r.meta.down : r.meta.lose)}」${R.won && Number(r.arg)===3 ? "<br>ゆうきの♥ を もらった！ 魔王戦で ♥+1" : !R.won && Number(r.arg)===3 ? "<br>魔王城の 入口で、カンタは まだ 待っている。" : ""}</p>` : ""}
       ${R.won || r.kind==="rival" ? "" : `<p class="cheer">まちがえた文は サビとして 残った。<br>サビを落とせば、次は 勝てる！</p>`}
     </section>
     ${R.trueEnd?`<section class="win theend"><div class="big" style="font-size:34px">TRUE END</div><p class="cheer">53体の ワスレモノが すべて 伝説体に なった。<br>${esc(heroName())}は「伝説の宅建士」と 呼ばれるように なった。</p></section>`:""}
